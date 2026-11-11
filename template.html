@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Eudokia Website Timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html{color-scheme:light}body{margin:0}*,*::before,*::after{box-sizing:border-box}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: a single reading column; the schedule is a wide chart in its own scroller, followed by the client's to-do list and the full task list. */
+:root{
+  --bg:#f6f7f8; --surface:#ffffff; --fg:#1b2129; --muted:#5c6673; --line:#dde1e6; --grid:#eceff2;
+  --accent:#2d4f73;          /* build */
+  --client:#a5660f;          /* client deliverables */
+  --review:#6a4fa0;          /* reviews */
+  --launch:#14705a;          /* launch milestones */
+  --phase2:#8a939e;
+  --today:#c2362f;
+  --done-fill:#d6dde4;
+  --font-display:"Schibsted Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12161b; --surface:#1a2027; --fg:#e6eaee; --muted:#9aa4af; --line:#2c343d; --grid:#222a32;
+  --accent:#7fa8d4; --client:#e0a84a; --review:#ab95dc; --launch:#4fc1a0; --phase2:#6d7782; --today:#ff6b63; --done-fill:#36404b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161b; --surface:#1a2027; --fg:#e6eaee; --muted:#9aa4af; --line:#2c343d; --grid:#222a32;
+  --accent:#7fa8d4; --client:#e0a84a; --review:#ab95dc; --launch:#4fc1a0; --phase2:#6d7782; --today:#ff6b63; --done-fill:#36404b; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1,h2{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,38px);font-weight:700;line-height:1.1}
+h2{font-size:20px;font-weight:600}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-direction:column;gap:10px}
+header p{margin:0;color:var(--muted);max-width:62ch}
+
+/* key dates strip */
+.keydates{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kd{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.kd .date{font-family:var(--font-display);font-size:22px;font-weight:600}
+.kd .lbl{font-size:13px;color:var(--muted)}
+.kd .cd{font-family:var(--font-mono);font-size:12px;color:var(--launch)}
+.kd.next .cd{color:var(--client)}
+
+section{display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sw.diamond{transform:rotate(45deg) scale(.8);border-radius:1px}
+.sw.todayk{width:2px;height:14px;border-radius:0;background:var(--today)}
+
+/* gantt */
+.gantt-scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.gantt{position:relative;display:grid;grid-template-columns:var(--labelw) var(--chartw);min-width:max-content}
+.g-corner,.g-label{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--line)}
+.g-corner{z-index:3;border-bottom:1px solid var(--line)}
+.g-months,.g-weeks{position:relative;height:22px}
+.g-head{border-bottom:1px solid var(--line);position:relative}
+.g-head .m{position:absolute;top:6px;font-family:var(--font-display);font-weight:600;font-size:13px;padding-left:6px;border-left:1px solid var(--line);height:16px;line-height:16px}
+.g-head .w{position:absolute;top:2px;font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-left:4px}
+.g-group{grid-column:1 / -1;display:grid;grid-template-columns:subgrid}
+.g-gtitle{position:sticky;left:0;z-index:2;background:var(--surface);padding:14px 14px 6px;font-size:12px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;border-right:1px solid var(--line)}
+.g-gtitle + .g-gfill{border-bottom:0}
+.g-label{padding:0 14px;height:34px;display:flex;align-items:center;font-size:13.5px;gap:8px;min-width:0}
+.g-label .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g-label.done .txt{color:var(--muted)}
+.g-track{position:relative;height:34px}
+.bar{position:absolute;top:9px;height:16px;border-radius:4px;background:var(--c);display:flex;align-items:center;overflow:hidden;cursor:default}
+.bar.sched{background:color-mix(in srgb,var(--c) 22%,var(--surface));box-shadow:inset 0 0 0 1.5px var(--c)}
+.bar.done{background:var(--done-fill);box-shadow:none}
+.bar .prog{position:absolute;inset:0 auto 0 0;background:var(--c)}
+.bar.sched .prog{background:var(--c)}
+.dia{position:absolute;top:10px;width:14px;height:14px;transform:translateX(-7px) rotate(45deg);background:var(--c);border-radius:2px}
+.dia.sched{background:var(--surface);box-shadow:inset 0 0 0 2px var(--c)}
+.dia.done{background:var(--done-fill);box-shadow:none}
+.dia.late{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--today)}
+.gridlines{position:absolute;top:0;bottom:0;pointer-events:none}
+.gridlines i{position:absolute;top:0;bottom:0;width:1px;background:var(--grid)}
+.gridlines i.wknd{width:var(--day);background:color-mix(in srgb,var(--grid) 55%,transparent)}
+.todayline{position:absolute;top:0;bottom:0;width:2px;background:var(--today);z-index:1;pointer-events:none}
+.todayline b{position:absolute;top:2px;left:4px;font:500 10px/1 var(--font-mono);color:var(--today);white-space:nowrap;background:var(--surface);padding:2px 3px}
+.bar:focus-visible,.dia:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+
+/* tooltip */
+.tip{position:fixed;z-index:20;max-width:300px;background:var(--fg);color:var(--bg);padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.45;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.tip strong{display:block;font-family:var(--font-display);font-weight:600;font-size:14px;margin-bottom:2px}
+.tip .mono{font-size:11.5px;opacity:.8}
+.tip p{margin:6px 0 0}
+
+/* status pill */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.Complete{color:var(--launch);border-color:color-mix(in srgb,var(--launch) 35%,transparent)}
+.pill.In-progress{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.pill.In-review{color:var(--review);border-color:color-mix(in srgb,var(--review) 35%,transparent)}
+.pill.Past-due{color:var(--today);border-color:color-mix(in srgb,var(--today) 40%,transparent)}
+
+/* lists */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:6px 18px;padding:13px 18px;border-top:1px solid var(--line);align-items:start}
+.row:first-child{border-top:0}
+.row .when{font-family:var(--font-mono);font-size:13px;color:var(--muted);padding-top:1px}
+.row .what{display:flex;flex-direction:column;gap:2px;min-width:0}
+.row .what b{font-weight:600}
+.row .what span{color:var(--muted);font-size:13.5px}
+.row.done .what b{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.prog-mini{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+.prog-mini i{display:inline-block;width:70px;height:5px;border-radius:3px;background:var(--grid);position:relative;overflow:hidden}
+.prog-mini i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--pct);background:var(--accent)}
+.wk-head{padding:10px 18px;background:var(--bg);border-top:1px solid var(--line);font-family:var(--font-mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.wk-head:first-child{border-top:0}
+.note{font-size:13.5px;color:var(--muted);max-width:70ch;margin:0}
+footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:620px){
+  .row{grid-template-columns:minmax(0,1fr) auto}
+  .row .when{grid-column:1 / -1}
+}
+@media (prefers-reduced-motion:no-preference){.bar,.dia{transition:filter .15s}.bar:hover,.dia:hover{filter:brightness(1.08)}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Eudokia Omali · Shopify Plus website</div>
+    <h1>Project timeline</h1>
+    <p>Where the build stands, what's next, and the materials we need from your team to hold the launch dates. Status as of <span class="mono" id="asof"></span>.</p>
+  </header>
+
+  <div class="keydates" id="keydates"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Schedule</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--accent)"></i>Build</span>
+        <span><i class="sw" style="background:var(--review)"></i>Your review</span>
+        <span><i class="sw diamond" style="background:var(--client)"></i>Due from Eudokia</span>
+        <span><i class="sw diamond" style="background:var(--launch)"></i>Launch</span>
+        <span><i class="sw" style="background:var(--done-fill)"></i>Complete</span>
+        <span><i class="sw todayk"></i>Today</span>
+      </div>
+    </div>
+    <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+    <p class="note">Solid bars are underway; outlined bars are scheduled. Hover or tap any bar for details.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>What we need from you</h2><span class="note">Late items may shift the launch date.</span></div>
+    <div class="list" id="clientlist"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>All tasks by week</h2></div>
+    <div class="list" id="tasklist"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Phase 2, after public launch</h2></div>
+    <div class="list" id="phase2"></div>
+  </section>
+
+  <footer>Based on the Eudokia Website Scope of Work, Nov 4, 2026. Feedback on each review round is due within 2 business days.</footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const TODAY = "__TODAY__";
+const TASKS = __DATA__;
+
+const DAY = 15, LABELW = 300;
+const START = new Date("2026-11-02T00:00:00"), END = new Date("2027-02-01T00:00:00");
+const ms = 864e5;
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const D = s => new Date(s + "T00:00:00");
+const dayIdx = s => Math.round((D(s) - START) / ms);
+const totalDays = Math.round((END - START) / ms);
+const fmt = (s, o={month:"short",day:"numeric"}) => D(s).toLocaleDateString("en-US", o);
+const range = t => !t.a ? "Dates to be set" : t.a === t.b ? fmt(t.a) : `${fmt(t.a)} – ${fmt(t.b)}`;
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function status(t){
+  if (t.s === "Done") return "Complete";
+  const end = t.b || t.a;
+  if (end && end < TODAY && t.k === "client") return "Past due";
+  if (t.s === "Backlog") return "Scheduled";
+  return t.s;
+}
+const colorOf = k => ({build:"var(--accent)",client:"var(--client)",review:"var(--review)",launch:"var(--launch)",phase2:"var(--phase2)"})[k];
+const pill = st => `<span class="pill ${st.replace(/ /g,"-")}">${st}</span>`;
+
+document.getElementById("asof").textContent = fmt(TODAY,{month:"long",day:"numeric",year:"numeric"});
+
+/* key dates */
+const daysTo = s => Math.round((D(s) - D(TODAY)) / ms);
+const nextClient = TASKS.filter(t => t.k==="client" && t.s!=="Done" && t.b >= TODAY).sort((x,y)=>x.b.localeCompare(y.b))[0];
+const kd = [
+  {date:"2026-12-15", lbl:"Friends and family launch (password protected)"},
+  {date:"2026-12-28", lbl:"Public launch"},
+  {date:"2027-01-27", lbl:"End of post-launch support"},
+];
+let kdHtml = kd.map(k => `<div class="kd"><span class="date">${fmt(k.date)}</span><span class="lbl">${k.lbl}</span><span class="cd">${daysTo(k.date)} days away</span></div>`).join("");
+if (nextClient) kdHtml = `<div class="kd next"><span class="date">${fmt(nextClient.b)}</span><span class="lbl">Next from you: ${esc(nextClient.t)}</span><span class="cd">${daysTo(nextClient.b) === 0 ? "Due today" : daysTo(nextClient.b) === 1 ? "Due tomorrow" : `Due in ${daysTo(nextClient.b)} days`}</span></div>` + kdHtml;
+document.getElementById("keydates").innerHTML = kdHtml;
+
+/* gantt */
+const g = document.getElementById("gantt");
+g.style.setProperty("--labelw", LABELW + "px");
+g.style.setProperty("--chartw", totalDays*DAY + "px");
+g.style.setProperty("--day", DAY + "px");
+
+let head = `<div class="g-corner"></div><div class="g-head"><div class="g-months">`;
+for (let d = new Date(START); d < END; d.setMonth(d.getMonth()+1, 1)) {
+  const x = Math.max(0, dayIdx(iso(d)));
+  head += `<span class="m" style="left:${x*DAY}px">${d.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>`;
+}
+head += `</div><div class="g-weeks">`;
+for (let i=0;i<totalDays;i+=7){ const d=new Date(+START+i*ms); head += `<span class="w" style="left:${i*DAY}px">${d.getDate()}</span>`; }
+head += `</div></div>`;
+
+let grid = "";
+for (let i=0;i<totalDays;i++){ const dow=(new Date(+START+i*ms)).getDay(); if(dow===6) grid+=`<i class="wknd" style="left:${i*DAY}px"></i>`; if(dow===1) grid+=`<i style="left:${i*DAY}px"></i>`; }
+
+const groups = [
+  {key:"build", title:"Build"},
+  {key:"review", title:"Your reviews"},
+  {key:"client", title:"Due from Eudokia"},
+  {key:"launch", title:"Launch"},
+];
+let body = "";
+let idx = 0;
+for (const grp of groups){
+  const rows = TASKS.filter(t => t.k===grp.key && t.a).sort((x,y)=> x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
+  body += `<div class="g-gtitle"><i class="sw" style="background:${colorOf(grp.key)}"></i>${grp.title}</div><div class="g-track" style="height:30px"></div>`;
+  for (const t of rows){
+    const st = status(t), cls = st==="Complete"?"done":st==="Scheduled"?"sched":"";
+    const x = dayIdx(t.a)*DAY, w = (dayIdx(t.b)-dayIdx(t.a)+1)*DAY;
+    const point = t.k==="client" || (t.k==="launch" && t.a===t.b);
+    const prog = t.p ? `<span class="prog" style="width:${Math.round(t.p[0]/t.p[1]*100)}%"></span>` : "";
+    const mark = point
+      ? `<span class="dia ${cls} ${st==="Past due"?"late":""}" style="--c:${colorOf(t.k)};left:${x+DAY/2}px" tabindex="0" data-i="${idx}"></span>`
+      : `<span class="bar ${cls}" style="--c:${colorOf(t.k)};left:${x+1}px;width:${w-2}px" tabindex="0" data-i="${idx}">${t.p&&cls!=="done"?prog:""}</span>`;
+    body += `<div class="g-label ${cls}" title="${esc(t.t)}"><span class="txt">${esc(t.t)}</span></div><div class="g-track">${mark}</div>`;
+    t._i = idx++;
+  }
+}
+const tIdx = dayIdx(TODAY);
+g.innerHTML = head + body;
+// overlay gridlines + today line spanning the chart column
+const overlay = document.createElement("div");
+overlay.className = "gridlines";
+overlay.style.cssText = `left:${LABELW}px;width:${totalDays*DAY}px`;
+overlay.innerHTML = grid;
+const tl = document.createElement("div");
+tl.className = "todayline";
+tl.style.left = (LABELW + tIdx*DAY + DAY/2) + "px";
+tl.innerHTML = `<b>Today</b>`;
+g.prepend(overlay); g.appendChild(tl);
+
+// scroll so today sits near the left of the chart
+const sc = document.querySelector(".gantt-scroll");
+requestAnimationFrame(()=>{ sc.scrollLeft = Math.max(0, (tIdx-9)*DAY); });
+
+/* tooltip */
+const tip = document.getElementById("tip");
+const byIdx = {}; TASKS.forEach(t => { if (t._i!==undefined) byIdx[t._i]=t; });
+function showTip(el){
+  const t = byIdx[el.dataset.i]; if(!t) return;
+  const st = status(t);
+  tip.innerHTML = `<strong>${esc(t.t)}</strong><span class="mono">${range(t)} · ${st}${t.p?` · ${t.p[0]} of ${t.p[1]} parts done`:""}</span>${t.d?`<p>${esc(t.d)}</p>`:""}`;
+  tip.hidden = false;
+  const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = Math.min(window.innerWidth - tw - 12, Math.max(12, r.left + r.width/2 - tw/2));
+  let top = r.top - th - 10; if (top < 8) top = r.bottom + 10;
+  tip.style.left = left+"px"; tip.style.top = top+"px";
+}
+g.addEventListener("mouseover", e => { const el=e.target.closest("[data-i]"); if(el) showTip(el); });
+g.addEventListener("mouseout", e => { if(e.target.closest("[data-i]")) tip.hidden = true; });
+g.addEventListener("focusin", e => { const el=e.target.closest("[data-i]"); if(el) showTip(el); });
+g.addEventListener("focusout", () => tip.hidden = true);
+g.addEventListener("click", e => { const el=e.target.closest("[data-i]"); if(el) showTip(el); else tip.hidden = true; });
+sc.addEventListener("scroll", () => tip.hidden = true, {passive:true});
+window.addEventListener("scroll", () => tip.hidden = true, {passive:true});
+
+/* lists */
+const rowHtml = (t, showDesc=true) => {
+  const st = status(t);
+  const prog = t.p ? `<span class="prog-mini" style="--pct:${Math.round(t.p[0]/t.p[1]*100)}%"><i></i>${t.p[0]}/${t.p[1]}</span>` : "";
+  return `<div class="row ${st==="Complete"?"done":""}"><span class="when">${range(t)}</span><span class="what"><b>${esc(t.t)}</b>${showDesc&&t.d?`<span>${esc(t.d)}</span>`:""}${prog}</span>${pill(st)}</div>`;
+};
+const clientItems = TASKS.filter(t=>t.k==="client").sort((x,y)=>x.b.localeCompare(y.b));
+document.getElementById("clientlist").innerHTML = clientItems.map(t=>rowHtml(t,false)).join("");
+
+const dated = TASKS.filter(t=>t.a && t.k!=="client").sort((x,y)=> x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
+const weekOf = s => { const d=D(s); const off=(d.getDay()+6)%7; const r=new Date(d); r.setDate(d.getDate()-off); return iso(r); };
+let html = "", cur = "";
+for (const t of dated){
+  const w = weekOf(t.a);
+  if (w !== cur){ cur = w; html += `<div class="wk-head">Week of ${fmt(w,{month:"long",day:"numeric"})}</div>`; }
+  html += rowHtml(t);
+}
+document.getElementById("tasklist").innerHTML = html;
+document.getElementById("phase2").innerHTML = TASKS.filter(t=>t.k==="phase2").map(t=>rowHtml(t)).join("");
+</script>
+
+</body>
+</html>
